@@ -16,7 +16,7 @@
 Summary: Package that installs %scl
 Name: %scl_name
 Version: 2.2
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPLv2+
 Source0: README
 Source1: LICENSE
@@ -39,6 +39,7 @@ Package shipping essential scripts to work with %scl Software Collection.
 %package build
 Summary: Package shipping basic build configuration
 Requires: scl-utils-build
+Requires: %{scl_prefix}scldevel
 
 %description build
 Package shipping essential configuration macros to build %scl Software Collection.
@@ -116,5 +117,11 @@ mkdir -p %{buildroot}%{_libdir}/pkgconfig
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
+* Wed Feb 17 2016 Pavel Valena <pvalena@redhat.com> - 2.2-3
+- Fix typo in build subpackage
+
+* Wed Feb 17 2016 Pavel Valena <pvalena@redhat.com> - 2.2-2
+- Add scldevel subpackage to Requires of build subpackage
+
 * Thu Dec 17 2015 Pavel Valena <pvalena@redhat.com> - 2.2-1
 - Initial package
