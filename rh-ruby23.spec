@@ -2,21 +2,22 @@
 %global scl_name_base ruby
 %global scl_name_version 23
 
-%global scl %{scl_name_prefix}%{scl_name_base}%{scl_name_version}
-%scl_package %scl
-
 # Do not produce empty debuginfo package.
 %global debug_package %{nil}
 
 # Support SCL over NFS.
 %global nfsmountable 1
 
+# nfsmountable macro must be defined before defining the %%scl_package macro
+%global scl %{scl_name_prefix}%{scl_name_base}%{scl_name_version}
+%scl_package %scl
+
 %{!?install_scl: %global install_scl 1}
 
 Summary: Package that installs %scl
 Name: %scl_name
 Version: 2.2
-Release: 3%{?dist}
+Release: 7%{?dist}
 License: GPLv2+
 Source0: README
 Source1: LICENSE
@@ -76,13 +77,17 @@ help2man -N --section 7 ./h2m_help -o %{scl_name}.7
 %install
 %scl_install
 
-cat >> %{buildroot}%{_scl_scripts}/enable << EOF
+# Fix: install gem binaries to SCL PATH
+# https://bugzilla.redhat.com/show_bug.cgi?id=1225496
+perl -e 'while (<>) { if (/^([^=]*=)([^\$]*)(.*)/) { $pre = $1 ; $path = $2 ;
+  $post = $3 ; ($newpath = $path) =~ s/usr/usr\/local/ ; $newpath =~ s/://g ;
+  print "$pre$newpath:$path$post\n" }}' <<EOF >>%{buildroot}%{_scl_scripts}/enable
 export PATH=%{_bindir}\${PATH:+:\${PATH}}
 export LD_LIBRARY_PATH=%{_libdir}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
 export MANPATH=%{_mandir}:\$MANPATH
 export PKG_CONFIG_PATH=%{_libdir}/pkgconfig\${PKG_CONFIG_PATH:+:\${PKG_CONFIG_PATH}}
 # For SystemTap.
-export XDG_DATA_DIRS=%{_datadir}\${XDG_DATA_DIRS:+:\${XDG_DATA_DIRS}}
+export XDG_DATA_DIRS=%{_datadir}:\${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
 EOF
 
 cat >> %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel << EOF
@@ -117,6 +122,22 @@ mkdir -p %{buildroot}%{_libdir}/pkgconfig
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
+* Wed Nov 02 2016 Pavel Valena <pvalena@redhat.com> - 2.2-7
+- Fix: XDG_DATA_DIRS path
+  Resolves: rhbz#1391037
+
+* Thu Oct 27 2016 Pavel Valena <pvalena@redhat.com> - 2.2-6
+- Fix: define nfsmountable before %%scl_package %%scl
+  Resolves: rhbz#1389272
+
+* Wed Oct 26 2016 Pavel Valena <pvalena@redhat.com> - 2.2-5
+- Fix: XDG_DATA_DIRS env in enable script
+  Resolves: rhbz#1375512
+
+* Tue Apr 12 2016 Pavel Valena <pvalena@redhat.com> - 2.2-4
+- Fix: install gem binaries to SCL PATH
+  - Resolves: rhbz#1225496
+
 * Wed Feb 17 2016 Pavel Valena <pvalena@redhat.com> - 2.2-3
 - Fix typo in build subpackage
 
