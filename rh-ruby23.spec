@@ -2,21 +2,22 @@
 %global scl_name_base ruby
 %global scl_name_version 23
 
-%global scl %{scl_name_prefix}%{scl_name_base}%{scl_name_version}
-%scl_package %scl
-
 # Do not produce empty debuginfo package.
 %global debug_package %{nil}
 
 # Support SCL over NFS.
 %global nfsmountable 1
 
+# nfsmountable macro must be defined before defining the %%scl_package macro
+%global scl %{scl_name_prefix}%{scl_name_base}%{scl_name_version}
+%scl_package %scl
+
 %{!?install_scl: %global install_scl 1}
 
 Summary: Package that installs %scl
 Name: %scl_name
 Version: 2.2
-Release: 4%{?dist}
+Release: 7%{?dist}
 License: GPLv2+
 Source0: README
 Source1: LICENSE
@@ -86,7 +87,7 @@ export LD_LIBRARY_PATH=%{_libdir}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
 export MANPATH=%{_mandir}:\$MANPATH
 export PKG_CONFIG_PATH=%{_libdir}/pkgconfig\${PKG_CONFIG_PATH:+:\${PKG_CONFIG_PATH}}
 # For SystemTap.
-export XDG_DATA_DIRS=%{_datadir}\${XDG_DATA_DIRS:+:\${XDG_DATA_DIRS}}
+export XDG_DATA_DIRS=%{_datadir}:\${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
 EOF
 
 cat >> %{buildroot}%{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel << EOF
@@ -121,6 +122,18 @@ mkdir -p %{buildroot}%{_libdir}/pkgconfig
 %{_root_sysconfdir}/rpm/macros.%{scl_name_base}-scldevel
 
 %changelog
+* Wed Nov 02 2016 Pavel Valena <pvalena@redhat.com> - 2.2-7
+- Fix: XDG_DATA_DIRS path
+  Resolves: rhbz#1391037
+
+* Thu Oct 27 2016 Pavel Valena <pvalena@redhat.com> - 2.2-6
+- Fix: define nfsmountable before %%scl_package %%scl
+  Resolves: rhbz#1389272
+
+* Wed Oct 26 2016 Pavel Valena <pvalena@redhat.com> - 2.2-5
+- Fix: XDG_DATA_DIRS env in enable script
+  Resolves: rhbz#1375512
+
 * Tue Apr 12 2016 Pavel Valena <pvalena@redhat.com> - 2.2-4
 - Fix: install gem binaries to SCL PATH
   - Resolves: rhbz#1225496
